@@ -14,7 +14,35 @@ import { useRouter } from 'next/navigation';
 export default function OfflinePage() {
   const { isOnline, triggerSync } = useNetworkStatus();
   const router = useRouter();
+'use client';
 
+import React from 'react';
+import Link from 'next/link';
+
+export default function OfflinePage() {
+  return (
+    <main className="min-h-screen flex items-center justify-center p-6">
+      <div className="max-w-sm w-full rounded-xl border border-black/5 bg-white/70 dark:bg-black/20 backdrop-blur px-5 py-6 shadow-sm text-center">
+        <h1 className="text-xl font-semibold">오프라인 상태입니다</h1>
+        <p className="mt-2 text-sm text-black/70 dark:text-white/70">
+          네트워크 연결이 없어도 최근에 본 콘텐츠는 계속 확인할 수 있어요.
+          연결이 복구되면 자동으로 동기화됩니다.
+        </p>
+        <div className="mt-4 flex justify-center">
+          <Link
+            href="/"
+            className="inline-flex items-center rounded-lg bg-black text-white dark:bg-white dark:text-black px-3 py-2 text-sm"
+          >
+            홈으로 돌아가기
+          </Link>
+        </div>
+        <div className="mt-3 text-xs opacity-70">
+          문제 지속 시 네트워크 연결을 확인해 주세요.
+        </div>
+      </div>
+    </main>
+  );
+}
   useEffect(() => {
     if (isOnline) {
       // Redirect to home when back online
