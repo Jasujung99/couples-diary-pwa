@@ -1,0 +1,181 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                     String    @id @default(cuid())
+  email                  String    @unique
+  name                   String
+  avatar                 String?
+  provider               String    // 'google' | 'kakao'
+  providerId             String    @unique
+  partnerId              String?   @unique
+  relationshipStartDate  DateTime?
+  
+  // Preferences stored as JSON
+  theme                  String    @default("light") // 'light' | 'dark'
+  notifications          Boolean   @default(true)
+  language               String    @default("ko")
+  
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+  
+  // Relations
+  partner                User?     @relation("PartnerRelation", fields: [partnerId], references: [id])
+  partnerOf              User?     @relation("PartnerRelation")
+  
+  sentInvitations        PartnerInvitation[] @relation("InviterRelation")
+  receivedInvitations    PartnerInvitation[] @relation("InviteeRelation")
+  
+  diaryEntries           DiaryEntry[]
+  createdDatePlans       DatePlan[] @relation("DatePlanCreator")
+  createdMemories        Memory[] @relation("MemoryCreator")
+  reminders              Reminder[] @relation("UserReminders")
+  
+  @@map("users")
+}
+
+model PartnerInvitation {
+  id           String   @id @default(cuid())
+  inviterId    String
+  inviteeEmail String
+  status       String   @default("pending") // 'pending' | 'accepted' | 'rejected'
+  token        String   @unique
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+  
+  // Relations
+  inviter      User     @relation("InviterRelation", fields: [inviterId], references: [id], onDelete: Cascade)
+  invitee      User?    @relation("InviteeRelation", fields: [inviteeEmail], references: [email])
+  
+  @@map("partner_invitations")
+}
+
+model DiaryEntry {
+  id          String    @id @default(cuid())
+  authorId    String
+  coupleId    String    // Computed field based on partner relationship
+  mood        String
+  content     String
+  media       Json      @default("[]") // Array of MediaItem
+  date        DateTime
+  status      String    @default("waiting") // 'waiting' | 'replied'
+  isEncrypted Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  // Relations
+  author      User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  
+  @@map("diary_entries")
+}
+
+model DatePlan {
+  id           String    @id @default(cuid())
+  coupleId     String    // Computed field based on partner relationship
+  title        String
+  scheduledAt  DateTime
+  location     String
+  notes        String?
+  budget       Float     @default(0)
+  checklist    Json      @default("[]") // Array of ChecklistItem
+  createdBy    String
+  status       String    @default("planned") // 'planned' | 'completed' | 'cancelled'
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  
+  // Relations
+  creator      User      @relation("DatePlanCreator", fields: [createdBy], references: [id], onDelete: Cascade)
+  
+  @@map("date_plans")
+}
+
+model Memory {
+  id          String    @id @default(cuid())
+  coupleId    String    // Computed field based on partner relationship
+  title       String
+  location    String
+  date        DateTime
+  photos      Json      @default("[]") // Array of MediaItem
+  tags        Json      @default("[]") // Array of strings
+  color       String
+  createdBy   String
+  createdAt   DateTime  @default(now())
+  
+  // Relations
+  creator     User      @relation("MemoryCreator", fields: [createdBy], references: [id], onDelete: Cascade)
+  
+  @@map("memories")
+}
+
+model Reminder {
+  id            String    @id @default(cuid())
+  userId        String
+  eventId       String
+  eventType     String    // 'date' | 'diary' | 'memory' | 'milestone'
+  title         String
+  body          String
+  scheduledTime DateTime
+  data          Json      @default("{}")
+  status        String    @default("scheduled") // 'scheduled' | 'sent' | 'cancelled'
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  // Relations
+  user          User      @relation("UserReminders", fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("reminders")
+}
+
+model Breakup {
+  id                String    @id @default(cuid())
+  coupleId          String
+  initiatedBy       String
+  reason            String?
+  allowDataRecovery Boolean   @default(false)
+  recoveryExpiresAt DateTime?
+  status            String    @default("active") // 'active' | 'recovered' | 'permanent'
+  archiveId         String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  @@map("breakups")
+}
+
+model BreakupArchive {
+  id                String    @id
+  userId            String
+  coupleId          String
+  reason            String?
+  archivedAt        DateTime  @default(now())
+  recoveryExpiresAt DateTime
+  isRecoverable     Boolean   @default(true)
+  encryptedData     String    // Large text field for encrypted data
+  checksum          String
+  keyHint           String
+  
+  @@map("breakup_archives")
+}
+
+model EncryptionKey {
+  id          String    @id @default(cuid())
+  keyId       String    @unique
+  userId      String
+  coupleId    String
+  keyType     String    // 'diary' | 'media' | 'backup'
+  algorithm   String    @default("AES-GCM")
+  version     Int       @default(1)
+  createdAt   DateTime  @default(now())
+  lastUsed    DateTime  @default(now())
+  isActive    Boolean   @default(true)
+  
+  @@map("encryption_keys")
+}

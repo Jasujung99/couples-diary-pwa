@@ -1,26 +1,149 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Design System Colors */
+  --color-bg: #FCFCFD;
+  --color-bg-soft: #F8F7F4;
+  --color-lilac: #E2E0F4;
+  --color-sand: #F2EFE6;
+  --color-sand-deep: #EFE6D9;
+  --color-ice: #F1F4FA;
+  --color-gold-soft: #F1E08C;
+  --color-gold: #E2BC1A;
+  --color-mint: #D8E7C5;
+  --color-line: #CEC7A7;
+  --color-ink: #111214;
+  --color-forest: #2F3A24;
+  
+  /* Light theme semantic tokens */
+  --background: var(--color-bg);
+  --foreground: var(--color-ink);
+  --surface: var(--color-bg-soft);
+  --surface-elevated: var(--color-lilac);
+  --border: var(--color-line);
+  --accent: var(--color-gold);
+  --accent-soft: var(--color-gold-soft);
+  --success: var(--color-mint);
+  --muted: var(--color-sand);
+  --muted-deep: var(--color-sand-deep);
 }
 
-@theme inline {
+@theme {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-surface: var(--surface);
+  --color-surface-elevated: var(--surface-elevated);
+  --color-border: var(--border);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-success: var(--success);
+  --color-muted: var(--muted);
+  --color-muted-deep: var(--muted-deep);
+  --font-sans: var(--font-inter);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    /* Dark theme semantic tokens */
+    --background: var(--color-ink);
+    --foreground: var(--color-bg);
+    --surface: var(--color-forest);
+    --surface-elevated: var(--color-line);
+    --border: var(--color-sand);
+    --accent: var(--color-gold-soft);
+    --accent-soft: var(--color-gold);
+    --success: var(--color-mint);
+    --muted: var(--color-sand-deep);
+    --muted-deep: var(--color-sand);
   }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Focus styles for accessibility */
+*:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Mobile-first responsive design */
+html {
+  /* Prevent zoom on iOS */
+  -webkit-text-size-adjust: 100%;
+  /* Smooth scrolling */
+  scroll-behavior: smooth;
+}
+
+body {
+  /* Prevent overscroll bounce on iOS */
+  overscroll-behavior: none;
+  /* Prevent horizontal scroll */
+  overflow-x: hidden;
+}
+
+/* Safe area support for devices with notches */
+.safe-area-pt {
+  padding-top: env(safe-area-inset-top);
+}
+
+.safe-area-pb {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.safe-area-pl {
+  padding-left: env(safe-area-inset-left);
+}
+
+.safe-area-pr {
+  padding-right: env(safe-area-inset-right);
+}
+
+/* Touch-friendly tap targets */
+button, 
+[role="button"], 
+input[type="submit"], 
+input[type="button"] {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Improve touch scrolling on iOS */
+.scroll-smooth {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Hide scrollbars but keep functionality */
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Mobile navigation spacing */
+@media (max-width: 768px) {
+  .mobile-nav-spacing {
+    padding-bottom: calc(80px + env(safe-area-inset-bottom));
+  }
 }
