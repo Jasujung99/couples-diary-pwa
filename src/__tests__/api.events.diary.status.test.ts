@@ -1,0 +1,21 @@
+import handler from '@/pages/api/events/diary/status';
+import { createMockReqRes } from './testUtils';
+
+describe('API /api/events/diary/status', () => {
+  it('POST 시 200 반환', async () => {
+    const { req, res } = createMockReqRes('POST', {
+      body: { dateISO: new Date().toISOString(), url: '/diary' },
+    });
+    // @ts-ignore
+    await handler(req, res);
+    expect(res._status).toBe(200);
+    expect(res._json).toEqual({ ok: true });
+  });
+
+  it('POST 이외 메서드는 405', async () => {
+    const { req, res } = createMockReqRes('GET');
+    // @ts-ignore
+    await handler(req, res);
+    expect(res._status).toBe(405);
+  });
+});
