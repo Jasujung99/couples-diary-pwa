@@ -33,87 +33,27 @@ export function AuthScreen({ onSuccess, onError }: AuthScreenProps) {
 
       const callbackUrl = searchParams.get("callbackUrl") ?? fallbackCallbackUrl;
 
-      console.log(`로그인 시도: ${provider}, callbackUrl: ${callbackUrl}`);
+      // 리다이렉트를 true로 설정하여 NextAuth가 OAuth 프로세스를 처리하게 함
+      // 이렇게 하면 중간에 오류가 발생하지 않고 Google 계정 선택 화면으로 바로 이동
+      await signIn(provider, {
+        redirect: true,
+        callbackUrl,
+      });
 
-      // 실제 signIn 호출 테스트
-      console.log('signIn 함수 호출 직전');
-      try {
-        // 디버깅을 위해 redirect: false로 변경, 결과를 로그로 확인
-        const result = await signIn(provider, {
-          redirect: false,
-          callbackUrl,
-        });
-        console.log('signIn 함수 결과:', result);
+      // redirect: true이면 이 아래 코드는 실행되지 않음
+      // 만약 실행된다면 redirect가 실패한 경우임
 
-        // 결과가 있고 오류가 없으면 리다이렉트 수행
-        if (result && !result.error) {
-          console.log('로그인 성공, 리다이렉트 URL:', result.url);
-          window.location.href = result.url ?? callbackUrl;
-          return; // 추가 처리 방지
-        } else if (result?.error) {
-          console.error('로그인 오류:', result.error);
-        }
-      } catch (err) {
-        console.error('signIn 함수 예외:', err);
-      }
-
-      if (result?.error) {
-        let errorMessage = "로그인 중 오류가 발생했습니다.";
-
-        switch (result.error) {
-          case "OAuthSignin":
-            errorMessage = "소셜 로그인 연결에 실패했습니다.";
-            break;
-          case "OAuthCallback":
-            errorMessage = "인증 과정에서 오류가 발생했습니다.";
-            break;
-          case "OAuthCreateAccount":
-            errorMessage = "계정 생성 중 오류가 발생했습니다.";
-            break;
-          case "EmailCreateAccount":
-            errorMessage = "이메일 계정 생성에 실패했습니다.";
-            break;
-          case "Callback":
-            errorMessage = "로그인 콜백 처리 중 오류가 발생했습니다.";
-            break;
-          case "OAuthAccountNotLinked":
-            errorMessage = "이미 다른 방법으로 가입된 이메일입니다.";
-            break;
-          case "EmailSignin":
-            errorMessage = "이메일 로그인에 실패했습니다.";
-            break;
-          case "CredentialsSignin":
-            errorMessage = "로그인 정보가 올바르지 않습니다.";
-            break;
-          case "SessionRequired":
-            errorMessage = "로그인이 필요합니다.";
-            break;
-          default:
-            errorMessage = result.error;
-        }
-
-        setError({
-          message: errorMessage,
-          type: 'error'
-        });
-        onError?.(errorMessage);
-      } else if (result?.ok) {
-        // NextAuth가 반환하는 url이 있으면 그쪽으로 이동, 없으면 callbackUrl 사용
-        const url = result.url ?? callbackUrl;
-        if (url) {
-          router.replace(url);
-        } else {
-          router.replace(fallbackCallbackUrl);
-        }
-        onSuccess?.();
-      }
     } catch (err) {
-      const errorMessage = "네트워크 오류가 발생했습니다. 다시 시도해주세요.";
+      // 콘솔 로그 대신 조용히 처리
+      // 에러 UI만 표시
       setError({
-        message: errorMessage,
+        message: "로그인 시도 중 문제가 발생했습니다. 다시 시도해주세요.",
         type: 'error'
       });
-      onError?.(errorMessage);
+
+      if (onError) {
+        onError("로그인 시도 중 문제가 발생했습니다.");
+      }
     } finally {
       setIsLoading(null);
     }
@@ -197,10 +137,7 @@ export function AuthScreen({ onSuccess, onError }: AuthScreenProps) {
         >
           {/* Google login */}
           <Button
-            onClick={() => {
-              console.log('구글 버튼 클릭됨');
-              handleSocialLogin('google');
-            }}
+            onClick={() => handleSocialLogin('google')}
             disabled={isLoading !== null}
             className="w-full h-14 bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 shadow-sm"
             variant="outline"
