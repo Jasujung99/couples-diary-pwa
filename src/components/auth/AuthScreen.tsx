@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { signIn } from "next-auth/react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { fadeInUp, scaleIn, getTransition } from "@/utils/animations";
@@ -21,20 +22,25 @@ interface AuthError {
 export function AuthScreen({ onSuccess, onError }: AuthScreenProps) {
   const [isLoading, setIsLoading] = useState<string | null>(null);
   const [error, setError] = useState<AuthError | null>(null);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const fallbackCallbackUrl = "/";
 
   const handleSocialLogin = async (provider: 'google' | 'kakao') => {
     try {
       setIsLoading(provider);
       setError(null);
 
+      const callbackUrl = searchParams.get("callbackUrl") ?? fallbackCallbackUrl;
+
       const result = await signIn(provider, {
         redirect: false,
-        callbackUrl: "/",
+        callbackUrl,
       });
 
       if (result?.error) {
         let errorMessage = "로그인 중 오류가 발생했습니다.";
-        
+
         switch (result.error) {
           case "OAuthSignin":
             errorMessage = "소셜 로그인 연결에 실패했습니다.";
@@ -73,6 +79,13 @@ export function AuthScreen({ onSuccess, onError }: AuthScreenProps) {
         });
         onError?.(errorMessage);
       } else if (result?.ok) {
+        // NextAuth가 반환하는 url이 있으면 그쪽으로 이동, 없으면 callbackUrl 사용
+        const url = result.url ?? callbackUrl;
+        if (url) {
+          router.replace(url);
+        } else {
+          router.replace(fallbackCallbackUrl);
+        }
         onSuccess?.();
       }
     } catch (err) {
