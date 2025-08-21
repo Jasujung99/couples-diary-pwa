@@ -6,6 +6,7 @@ import { Bell, X, Check, Heart, MessageCircle, User } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { useNotifications, Notification } from '@/hooks/useNotifications';
+import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { formatDistanceToNow } from 'date-fns';
 
 interface NotificationCenterProps {
@@ -38,6 +39,14 @@ export function NotificationCenter({ className = '' }: NotificationCenterProps) 
     removeNotification,
     clearAll,
   } = useNotifications();
+  const {
+    permission,
+    isSupported,
+    isSubscribed,
+    subscribe,
+    unsubscribe,
+    sendLocalTestNotification,
+  } = usePushNotifications();
 
   const handleNotificationClick = (notification: Notification) => {
     if (!notification.read) {
@@ -116,6 +125,41 @@ export function NotificationCenter({ className = '' }: NotificationCenterProps) 
                       Notifications
                     </h3>
                     <div className="flex items-center gap-2">
+                      {isSupported && (permission !== 'granted' || !isSubscribed) && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={subscribe}
+                          className="text-xs"
+                        >
+                          Enable Push
+                        </Button>
+                      )}
+                      {isSupported && permission === 'granted' && isSubscribed && (
+                        <>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() =>
+                              sendLocalTestNotification('Test Notification', {
+                                body: 'This is a test notification',
+                                url: '/',
+                              })
+                            }
+                            className="text-xs"
+                          >
+                            Send test
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={unsubscribe}
+                            className="text-xs"
+                          >
+                            Disable
+                          </Button>
+                        </>
+                      )}
                       {unreadCount > 0 && (
                         <Button
                           variant="ghost"

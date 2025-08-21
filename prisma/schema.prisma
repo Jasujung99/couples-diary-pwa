@@ -6,40 +6,84 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+// NextAuth.js 필수 모델
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
 }
 
 model User {
-  id                     String    @id @default(cuid())
-  email                  String    @unique
-  name                   String
-  avatar                 String?
-  provider               String    // 'google' | 'kakao'
-  providerId             String    @unique
-  partnerId              String?   @unique
-  relationshipStartDate  DateTime?
-  
+  id                    String    @id @default(cuid())
+  email                 String    @unique
+  name                  String
+  avatar                String?
+  provider              String // 'google' | 'kakao'
+  providerId            String    @unique
+  partnerId             String?   @unique
+  relationshipStartDate DateTime?
+
   // Preferences stored as JSON
-  theme                  String    @default("light") // 'light' | 'dark'
-  notifications          Boolean   @default(true)
-  language               String    @default("ko")
-  
-  createdAt              DateTime  @default(now())
-  updatedAt              DateTime  @updatedAt
-  
+  theme         String  @default("light") // 'light' | 'dark'
+  notifications Boolean @default(true)
+  language      String  @default("ko")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   // Relations
-  partner                User?     @relation("PartnerRelation", fields: [partnerId], references: [id])
-  partnerOf              User?     @relation("PartnerRelation")
-  
-  sentInvitations        PartnerInvitation[] @relation("InviterRelation")
-  receivedInvitations    PartnerInvitation[] @relation("InviteeRelation")
-  
-  diaryEntries           DiaryEntry[]
-  createdDatePlans       DatePlan[] @relation("DatePlanCreator")
-  createdMemories        Memory[] @relation("MemoryCreator")
-  reminders              Reminder[] @relation("UserReminders")
-  
+  partner   User? @relation("PartnerRelation", fields: [partnerId], references: [id])
+  partnerOf User? @relation("PartnerRelation")
+
+  // NextAuth 관련 관계
+  accounts Account[]
+  sessions Session[]
+
+  sentInvitations     PartnerInvitation[] @relation("InviterRelation")
+  receivedInvitations PartnerInvitation[] @relation("InviteeRelation")
+
+  diaryEntries     DiaryEntry[]
+  createdDatePlans DatePlan[]   @relation("DatePlanCreator")
+  createdMemories  Memory[]     @relation("MemoryCreator")
+  reminders        Reminder[]   @relation("UserReminders")
+
   @@map("users")
 }
 
@@ -51,87 +95,87 @@ model PartnerInvitation {
   token        String   @unique
   expiresAt    DateTime
   createdAt    DateTime @default(now())
-  
+
   // Relations
-  inviter      User     @relation("InviterRelation", fields: [inviterId], references: [id], onDelete: Cascade)
-  invitee      User?    @relation("InviteeRelation", fields: [inviteeEmail], references: [email])
-  
+  inviter User  @relation("InviterRelation", fields: [inviterId], references: [id], onDelete: Cascade)
+  invitee User? @relation("InviteeRelation", fields: [inviteeEmail], references: [email])
+
   @@map("partner_invitations")
 }
 
 model DiaryEntry {
-  id          String    @id @default(cuid())
+  id          String   @id @default(cuid())
   authorId    String
-  coupleId    String    // Computed field based on partner relationship
+  coupleId    String // Computed field based on partner relationship
   mood        String
   content     String
-  media       Json      @default("[]") // Array of MediaItem
+  media       String   @default("[]") // Array of MediaItem as JSON string
   date        DateTime
-  status      String    @default("waiting") // 'waiting' | 'replied'
-  isEncrypted Boolean   @default(true)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  
+  status      String   @default("waiting") // 'waiting' | 'replied'
+  isEncrypted Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
   // Relations
-  author      User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  
+  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
   @@map("diary_entries")
 }
 
 model DatePlan {
-  id           String    @id @default(cuid())
-  coupleId     String    // Computed field based on partner relationship
-  title        String
-  scheduledAt  DateTime
-  location     String
-  notes        String?
-  budget       Float     @default(0)
-  checklist    Json      @default("[]") // Array of ChecklistItem
-  createdBy    String
-  status       String    @default("planned") // 'planned' | 'completed' | 'cancelled'
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
-  
+  id          String   @id @default(cuid())
+  coupleId    String // Computed field based on partner relationship
+  title       String
+  scheduledAt DateTime
+  location    String
+  notes       String?
+  budget      Float    @default(0)
+  checklist   String   @default("[]") // Array of ChecklistItem as JSON string
+  createdBy   String
+  status      String   @default("planned") // 'planned' | 'completed' | 'cancelled'
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
   // Relations
-  creator      User      @relation("DatePlanCreator", fields: [createdBy], references: [id], onDelete: Cascade)
-  
+  creator User @relation("DatePlanCreator", fields: [createdBy], references: [id], onDelete: Cascade)
+
   @@map("date_plans")
 }
 
 model Memory {
-  id          String    @id @default(cuid())
-  coupleId    String    // Computed field based on partner relationship
-  title       String
-  location    String
-  date        DateTime
-  photos      Json      @default("[]") // Array of MediaItem
-  tags        Json      @default("[]") // Array of strings
-  color       String
-  createdBy   String
-  createdAt   DateTime  @default(now())
-  
+  id        String   @id @default(cuid())
+  coupleId  String // Computed field based on partner relationship
+  title     String
+  location  String
+  date      DateTime
+  photos    String   @default("[]") // Array of MediaItem as JSON string
+  tags      String   @default("[]") // Array of strings as JSON string
+  color     String
+  createdBy String
+  createdAt DateTime @default(now())
+
   // Relations
-  creator     User      @relation("MemoryCreator", fields: [createdBy], references: [id], onDelete: Cascade)
-  
+  creator User @relation("MemoryCreator", fields: [createdBy], references: [id], onDelete: Cascade)
+
   @@map("memories")
 }
 
 model Reminder {
-  id            String    @id @default(cuid())
+  id            String   @id @default(cuid())
   userId        String
   eventId       String
-  eventType     String    // 'date' | 'diary' | 'memory' | 'milestone'
+  eventType     String // 'date' | 'diary' | 'memory' | 'milestone'
   title         String
   body          String
   scheduledTime DateTime
-  data          Json      @default("{}")
-  status        String    @default("scheduled") // 'scheduled' | 'sent' | 'cancelled'
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  
+  data          String   @default("{}") // JSON stored as TEXT for SQLite compatibility
+  status        String   @default("scheduled") // 'scheduled' | 'sent' | 'cancelled'
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
   // Relations
-  user          User      @relation("UserReminders", fields: [userId], references: [id], onDelete: Cascade)
-  
+  user User @relation("UserReminders", fields: [userId], references: [id], onDelete: Cascade)
+
   @@map("reminders")
 }
 
@@ -146,36 +190,36 @@ model Breakup {
   archiveId         String?
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
-  
+
   @@map("breakups")
 }
 
 model BreakupArchive {
-  id                String    @id
+  id                String   @id
   userId            String
   coupleId          String
   reason            String?
-  archivedAt        DateTime  @default(now())
+  archivedAt        DateTime @default(now())
   recoveryExpiresAt DateTime
-  isRecoverable     Boolean   @default(true)
-  encryptedData     String    // Large text field for encrypted data
+  isRecoverable     Boolean  @default(true)
+  encryptedData     String // Large text field for encrypted data
   checksum          String
   keyHint           String
-  
+
   @@map("breakup_archives")
 }
 
 model EncryptionKey {
-  id          String    @id @default(cuid())
-  keyId       String    @unique
-  userId      String
-  coupleId    String
-  keyType     String    // 'diary' | 'media' | 'backup'
-  algorithm   String    @default("AES-GCM")
-  version     Int       @default(1)
-  createdAt   DateTime  @default(now())
-  lastUsed    DateTime  @default(now())
-  isActive    Boolean   @default(true)
-  
+  id        String   @id @default(cuid())
+  keyId     String   @unique
+  userId    String
+  coupleId  String
+  keyType   String // 'diary' | 'media' | 'backup'
+  algorithm String   @default("AES-GCM")
+  version   Int      @default(1)
+  createdAt DateTime @default(now())
+  lastUsed  DateTime @default(now())
+  isActive  Boolean  @default(true)
+
   @@map("encryption_keys")
 }

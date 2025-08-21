@@ -125,23 +125,68 @@ if (workbox) {
             action: 'dismiss',
             title: 'Later'
           }
-        ]
+        ],
+        data: { url: '/' }
       });
     }
   });
 
-  // Handle notification clicks
+  // Handle Web Push payloads
+  self.addEventListener('push', event => {
+    try {
+      const data = (event.data && event.data.json && event.data.json()) || {};
+      const title = data.title || 'New Notification';
+      const options = {
+        body: data.body || '',
+        icon: '/icons/icon-192x192.png',
+        badge: '/icons/icon-72x72.png',
+        tag: data.tag || 'push',
+        data: { url: data.url || '/' }
+      };
+      event.waitUntil(self.registration.showNotification(title, options));
+    } catch (e) {
+      // If payload is not JSON (or empty), show a generic notification
+      event.waitUntil(self.registration.showNotification('New Notification', {
+        body: '',
+        icon: '/icons/icon-192x192.png',
+        badge: '/icons/icon-72x72.png',
+        tag: 'push',
+        data: { url: '/' }
+      }));
+    }
+  });
+
+  // Handle notification clicks with deep linking
   self.addEventListener('notificationclick', event => {
     event.notification.close();
 
     if (event.action === 'reload') {
       // Reload all clients
-      self.clients.matchAll().then(clients => {
-        clients.forEach(client => {
-          client.postMessage({ type: 'RELOAD_APP' });
-        });
-      });
+      event.waitUntil(
+        self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clients => {
+          clients.forEach(client => {
+            client.postMessage({ type: 'RELOAD_APP' });
+          });
+        })
+      );
+      return;
     }
+
+    // Default click: focus existing window or open target URL
+    const targetUrl = (event.notification && event.notification.data && event.notification.data.url) || '/';
+    event.waitUntil(
+      self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientList => {
+        for (const client of clientList) {
+          const url = new URL(client.url);
+          if (url.pathname === targetUrl && 'focus' in client) {
+            return client.focus();
+          }
+        }
+        if (self.clients.openWindow) {
+          return self.clients.openWindow(targetUrl);
+        }
+      })
+    );
   });
 
   // Offline fallback page

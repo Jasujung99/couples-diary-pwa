@@ -88,15 +88,36 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       setAuthState(prev => ({ ...prev, isLoading: true }));
       
+      // 개발 환경에서 디버깅 정보 로깅
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`AuthContext: ${credentials.provider} 로그인 시도`);
+      }
+
       const result = await signIn(credentials.provider, {
         redirect: false,
         callbackUrl: "/",
       });
 
+      // 개발 환경에서 결과 로깅
+      if (process.env.NODE_ENV === 'development') {
+        console.log('AuthContext 로그인 결과:', result);
+      }
+
       if (result?.error) {
+        console.error('AuthContext 로그인 오류:', result.error);
         throw new Error(result.error);
       }
+
+      // 성공적으로 로그인한 경우 세션 확인
+      if (result?.ok) {
+        // 세션 업데이트를 위해 짧은 대기
+        await new Promise(resolve => setTimeout(resolve, 500));
+        await update();
+      }
+
+      return result;
     } catch (error) {
+      console.error('AuthContext 로그인 예외:', error);
       setAuthState(prev => ({ ...prev, isLoading: false }));
       throw error;
     }

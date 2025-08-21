@@ -33,19 +33,27 @@ export function AuthScreen({ onSuccess, onError }: AuthScreenProps) {
 
       const callbackUrl = searchParams.get("callbackUrl") ?? fallbackCallbackUrl;
 
-      // 리다이렉트를 true로 설정하여 NextAuth가 OAuth 프로세스를 처리하게 함
-      // 이렇게 하면 중간에 오류가 발생하지 않고 Google 계정 선택 화면으로 바로 이동
+      // 개발 환경에서 디버깅 정보 로깅
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`${provider} 로그인 시도`, { 
+          callbackUrl,
+          currentUrl: window.location.href,
+        });
+      }
+
+      // 간단하게 직접 리디렉션 방식으로만 시도
+      // 이 접근 방식은 NextAuth가 전체 OAuth 흐름을 처리하도록 함
       await signIn(provider, {
         redirect: true,
         callbackUrl,
       });
 
-      // redirect: true이면 이 아래 코드는 실행되지 않음
-      // 만약 실행된다면 redirect가 실패한 경우임
-
+      // 참고: redirect: true로 설정했기 때문에 이 코드는 실행되지 않습니다.
+      // 성공/실패 모두 NextAuth가 적절한 URL로 리디렉션합니다.
     } catch (err) {
-      // 콘솔 로그 대신 조용히 처리
-      // 에러 UI만 표시
+      // 오류 로깅 및 UI 표시 (주로 네트워크 오류 같은 경우에만 여기로 옴)
+      console.error(`${provider} 로그인 중 오류 발생:`, err);
+
       setError({
         message: "로그인 시도 중 문제가 발생했습니다. 다시 시도해주세요.",
         type: 'error'
