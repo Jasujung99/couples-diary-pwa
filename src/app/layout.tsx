@@ -1,12 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { ThemeProvider } from "@/contexts/ThemeContext";
-import { AuthProvider } from "@/contexts/AuthContext";
-import { SocketProvider } from "@/contexts/SocketContext";
-import { SessionProvider } from "next-auth/react";
-import { OfflineIndicator, OfflineToast } from "@/components/offline/OfflineIndicator";
-import { OfflineProvider } from "@/components/offline/OfflineProvider";
+import { ClientProviders } from "@/components/providers/ClientProviders";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -59,12 +54,12 @@ export default function RootLayout({
         <meta name="msapplication-config" content="/icons/browserconfig.xml" />
         <meta name="msapplication-TileColor" content="#E2E0F4" />
         <meta name="msapplication-tap-highlight" content="no" />
-        
+
         <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
         <link rel="apple-touch-icon" sizes="152x152" href="/icons/icon-152x152.png" />
         <link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-192x192.png" />
         <link rel="apple-touch-icon" sizes="167x167" href="/icons/icon-192x192.png" />
-        
+
         <link rel="icon" type="image/png" sizes="32x32" href="/icons/icon.svg" />
         <link rel="icon" type="image/png" sizes="16x16" href="/icons/icon.svg" />
         <link rel="manifest" href="/manifest.json" />
@@ -72,19 +67,7 @@ export default function RootLayout({
         <link rel="shortcut icon" href="/icons/icon.svg" />
       </head>
       <body className={`${inter.variable} font-sans antialiased`}>
-        <SessionProvider>
-          <AuthProvider>
-            <ThemeProvider>
-              <SocketProvider>
-                <OfflineProvider>
-                  <OfflineIndicator />
-                  {children}
-                  <OfflineToast />
-                </OfflineProvider>
-              </SocketProvider>
-            </ThemeProvider>
-          </AuthProvider>
-        </SessionProvider>
+        <ClientProviders>{children}</ClientProviders>
       </body>
     </html>
   );

@@ -2,6 +2,8 @@
  * Hook for monitoring network status and offline functionality
  */
 
+'use client';
+
 import { useState, useEffect } from 'react';
 import { backgroundSync } from '@/lib/backgroundSync';
 
