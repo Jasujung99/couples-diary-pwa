@@ -97,13 +97,13 @@ export function AuthScreen({ onSuccess, onError }: AuthScreenProps) {
         {/* Header */}
         <motion.div
           variants={fadeInUp}
-          initial="initial"
+          initial={false}
           animate="animate"
           className="text-center mb-12"
         >
           <motion.div
             variants={scaleIn}
-            initial="initial"
+            initial={false}
             animate="animate"
             className="inline-flex items-center justify-center w-20 h-20 bg-gold/10 rounded-full mb-6"
           >
@@ -159,7 +159,7 @@ export function AuthScreen({ onSuccess, onError }: AuthScreenProps) {
         {/* Social login buttons */}
         <motion.div
           variants={fadeInUp}
-          initial="initial"
+          initial={false}
           animate="animate"
           className="space-y-4"
         >
@@ -215,7 +215,7 @@ export function AuthScreen({ onSuccess, onError }: AuthScreenProps) {
         {/* Terms and privacy */}
         <motion.div
           variants={fadeInUp}
-          initial="initial"
+          initial={false}
           animate="animate"
           className="mt-8 text-center"
         >
