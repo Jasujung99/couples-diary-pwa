@@ -33,10 +33,29 @@ export function AuthScreen({ onSuccess, onError }: AuthScreenProps) {
 
       const callbackUrl = searchParams.get("callbackUrl") ?? fallbackCallbackUrl;
 
-      const result = await signIn(provider, {
-        redirect: false,
-        callbackUrl,
-      });
+      console.log(`로그인 시도: ${provider}, callbackUrl: ${callbackUrl}`);
+
+      // 실제 signIn 호출 테스트
+      console.log('signIn 함수 호출 직전');
+      try {
+        // 디버깅을 위해 redirect: false로 변경, 결과를 로그로 확인
+        const result = await signIn(provider, {
+          redirect: false,
+          callbackUrl,
+        });
+        console.log('signIn 함수 결과:', result);
+
+        // 결과가 있고 오류가 없으면 리다이렉트 수행
+        if (result && !result.error) {
+          console.log('로그인 성공, 리다이렉트 URL:', result.url);
+          window.location.href = result.url ?? callbackUrl;
+          return; // 추가 처리 방지
+        } else if (result?.error) {
+          console.error('로그인 오류:', result.error);
+        }
+      } catch (err) {
+        console.error('signIn 함수 예외:', err);
+      }
 
       if (result?.error) {
         let errorMessage = "로그인 중 오류가 발생했습니다.";
@@ -178,7 +197,10 @@ export function AuthScreen({ onSuccess, onError }: AuthScreenProps) {
         >
           {/* Google login */}
           <Button
-            onClick={() => handleSocialLogin('google')}
+            onClick={() => {
+              console.log('구글 버튼 클릭됨');
+              handleSocialLogin('google');
+            }}
             disabled={isLoading !== null}
             className="w-full h-14 bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 shadow-sm"
             variant="outline"
