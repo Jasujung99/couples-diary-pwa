@@ -179,7 +179,52 @@ const nextConfig = {
   compiler: {
     removeConsole: process.env.NODE_ENV !== 'development'
   },
-  serverExternalPackages: ['socket.io', 'socket.io-client']
+  serverExternalPackages: ['socket.io', 'socket.io-client'],
+  experimental: {
+    optimizePackageImports: ['lucide-react', 'framer-motion'],
+  },
+  webpack: (config, { dev, isServer }) => {
+    // Optimize bundle splitting
+    if (!dev && !isServer) {
+      config.optimization.splitChunks = {
+        chunks: 'all',
+        cacheGroups: {
+          default: false,
+          vendors: false,
+          // Vendor chunk for common libraries
+          vendor: {
+            name: 'vendor',
+            chunks: 'all',
+            test: /[\\/]node_modules[\\/]/,
+            priority: 20
+          },
+          // Common chunk for shared components
+          common: {
+            name: 'common',
+            minChunks: 2,
+            chunks: 'all',
+            priority: 10,
+            reuseExistingChunk: true,
+            enforce: true
+          },
+          // Separate chunk for large libraries
+          framerMotion: {
+            name: 'framer-motion',
+            test: /[\\/]node_modules[\\/]framer-motion[\\/]/,
+            chunks: 'all',
+            priority: 30
+          },
+          lucide: {
+            name: 'lucide-react',
+            test: /[\\/]node_modules[\\/]lucide-react[\\/]/,
+            chunks: 'all',
+            priority: 30
+          }
+        }
+      };
+    }
+    return config;
+  }
 };
 
 module.exports = withPWA(nextConfig);

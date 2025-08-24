@@ -1,5 +1,11 @@
 // jest-dom 확장 (매처)
 import '@testing-library/jest-dom';
+import 'jest-axe/extend-expect';
+
+// TextEncoder/TextDecoder polyfills for Node.js environment
+import { TextEncoder, TextDecoder } from 'util';
+global.TextEncoder = TextEncoder;
+global.TextDecoder = TextDecoder;
 
 // matchMedia 폴리필 (Framer Motion 등)
 Object.defineProperty(window, 'matchMedia', {
@@ -8,10 +14,10 @@ Object.defineProperty(window, 'matchMedia', {
     matches: false,
     media: query,
     onchange: null,
-    addListener: () => {}, // deprecated
-    removeListener: () => {}, // deprecated
-    addEventListener: () => {},
-    removeEventListener: () => {},
+    addListener: () => { }, // deprecated
+    removeListener: () => { }, // deprecated
+    addEventListener: () => { },
+    removeEventListener: () => { },
     dispatchEvent: () => false,
   }),
 });

@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Home, BookOpen, Heart, Settings, MapPin } from 'lucide-react';
 import { cn } from '@/utils';
+import { generateAriaLabel, keyboardNavigation } from '@/utils/accessibility';
 
 interface TabItem {
   id: string;
@@ -62,6 +63,29 @@ export function TabNavigation({ className }: TabNavigationProps) {
     }
   };
 
+  const handleKeyDown = (event: React.KeyboardEvent, tab: TabItem) => {
+    const tabIds = tabs.map(t => t.id);
+    const handled = keyboardNavigation.handleTabNavigation(
+      event.nativeEvent,
+      tabIds,
+      activeTab.id,
+      (newTabId) => {
+        const newTab = tabs.find(t => t.id === newTabId);
+        if (newTab) {
+          handleTabPress(newTab);
+        }
+      }
+    );
+
+    if (!handled) {
+      // Handle Enter and Space
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        handleTabPress(tab);
+      }
+    }
+  };
+
   return (
     <motion.nav 
       className={cn(
@@ -73,6 +97,8 @@ export function TabNavigation({ className }: TabNavigationProps) {
       initial={{ y: 100, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.3, ease: 'easeOut' }}
+      role="tablist"
+      aria-label="Main navigation"
     >
       <div className="flex items-center justify-around max-w-md mx-auto">
         {tabs.map((tab) => {
@@ -83,10 +109,12 @@ export function TabNavigation({ className }: TabNavigationProps) {
             <motion.button
               key={tab.id}
               onClick={() => handleTabPress(tab)}
+              onKeyDown={(e) => handleKeyDown(e, tab)}
               className={cn(
                 'relative flex flex-col items-center justify-center',
                 'px-3 py-2 rounded-xl transition-colors duration-200',
                 'min-w-[60px] min-h-[60px]',
+                'focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2',
                 isActive 
                   ? 'text-accent' 
                   : 'text-foreground/60 hover:text-foreground active:text-foreground/80'
@@ -94,6 +122,11 @@ export function TabNavigation({ className }: TabNavigationProps) {
               whileTap={{ scale: 0.95 }}
               whileHover={{ scale: 1.05 }}
               transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+              role="tab"
+              aria-selected={isActive}
+              aria-controls={`${tab.id}-panel`}
+              aria-label={generateAriaLabel.navigationTab(tab.label, isActive)}
+              tabIndex={isActive ? 0 : -1}
             >
               {/* Active indicator background */}
               {isActive && (

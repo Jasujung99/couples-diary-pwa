@@ -4,6 +4,7 @@ import React, { useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Camera, X, Image as ImageIcon } from 'lucide-react';
 import { MediaItem } from '@/types';
+import { OptimizedImage } from '@/components/ui/OptimizedImage';
 
 interface MediaUploadProps {
   media: MediaItem[];
@@ -126,10 +127,14 @@ export function MediaUpload({
                 className="relative group rounded-lg overflow-hidden bg-bgSoft"
               >
                 {item.type === 'image' ? (
-                  <img
+                  <OptimizedImage
                     src={item.url}
                     alt={item.filename}
-                    className="w-full h-24 object-cover"
+                    width={200}
+                    height={96}
+                    className="w-full h-24"
+                    objectFit="cover"
+                    quality={60}
                   />
                 ) : (
                   <div className="w-full h-24 flex items-center justify-center">

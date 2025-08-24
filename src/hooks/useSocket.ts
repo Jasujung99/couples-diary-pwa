@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useSession } from 'next-auth/react';
+import { useSocketMock } from './useSocketMock';
 
 interface SocketEvents {
   'new-diary-entry': (data: {
@@ -56,6 +57,11 @@ interface UseSocketReturn {
 }
 
 export function useSocket(): UseSocketReturn {
+  // Use mock socket in development to avoid connection errors
+  if (process.env.NODE_ENV === 'development') {
+    return useSocketMock();
+  }
+
   const { data: session, status } = useSession();
   const socketRef = useRef<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
@@ -67,10 +73,13 @@ export function useSocket(): UseSocketReturn {
     if (status === 'loading') return;
     
     if (status === 'authenticated' && session?.user && !socketRef.current) {
-      // Initialize socket connection
+      // Initialize socket connection with error handling
       const socket = io({
         path: '/api/socket',
         addTrailingSlash: false,
+        timeout: 5000,
+        retries: 3,
+        autoConnect: false, // Don't auto-connect, we'll connect manually
       });
 
       socketRef.current = socket;
@@ -89,8 +98,9 @@ export function useSocket(): UseSocketReturn {
       });
 
       socket.on('connect_error', (error) => {
-        console.error('Socket connection error:', error);
+        console.warn('Socket connection error (this is expected in development):', error.message);
         setIsConnected(false);
+        // Don't throw error, just log it
       });
 
       // Partner presence events
@@ -129,6 +139,13 @@ export function useSocket(): UseSocketReturn {
           clearTimeout(typingTimeoutRef.current);
         }
       });
+
+      // Try to connect
+      try {
+        socket.connect();
+      } catch (error) {
+        console.warn('Failed to connect to socket server (this is expected in development):', error);
+      }
 
     } else if (status === 'unauthenticated' && socketRef.current) {
       // Disconnect socket when user logs out

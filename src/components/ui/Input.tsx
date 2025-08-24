@@ -2,44 +2,93 @@
 
 import React, { forwardRef } from 'react';
 import { clsx } from 'clsx';
+import { generateAriaLabel } from '@/utils/accessibility';
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   variant?: 'default' | 'outline';
   error?: boolean;
+  label?: string;
+  helperText?: string;
+  errorMessage?: string;
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ className, variant = 'default', error, type = 'text', ...props }, ref) => {
+  ({ className, variant = 'default', error, type = 'text', label, helperText, errorMessage, required, ...props }, ref) => {
+    const inputId = props.id || `input-${Math.random().toString(36).substr(2, 9)}`;
+    const helperId = `${inputId}-helper`;
+    const errorId = `${inputId}-error`;
+    
+    // Generate accessible aria-label
+    const ariaLabel = label ? 
+      generateAriaLabel.formField(label, !!required, errorMessage) : 
+      props['aria-label'];
+    
     return (
-      <input
-        ref={ref}
-        type={type}
-        className={clsx(
-          // Base styles
-          'w-full px-3 py-2 text-sm rounded-lg transition-colors',
-          'placeholder:text-foreground/40 focus:outline-none focus:ring-2',
-          'disabled:opacity-50 disabled:cursor-not-allowed',
-          
-          // Variant styles
-          variant === 'default' && [
-            'bg-bgSoft border border-line/20',
-            'focus:ring-gold/20 focus:border-gold',
-            'text-foreground',
-          ],
-          
-          variant === 'outline' && [
-            'bg-transparent border border-line/40',
-            'focus:ring-gold/20 focus:border-gold',
-            'text-foreground',
-          ],
-          
-          // Error state
-          error && 'border-red-500 focus:ring-red-500/20 focus:border-red-500',
-          
-          className
+      <div className="space-y-1">
+        {label && (
+          <label 
+            htmlFor={inputId}
+            className="block text-sm font-medium text-foreground"
+          >
+            {label}
+            {required && <span className="text-red-500 ml-1" aria-hidden="true">*</span>}
+          </label>
         )}
-        {...props}
-      />
+        <input
+          ref={ref}
+          id={inputId}
+          type={type}
+          required={required}
+          className={clsx(
+            // Base styles
+            'w-full px-3 py-2 text-sm rounded-lg transition-colors',
+            'placeholder:text-foreground/40 focus:outline-none focus:ring-2',
+            'disabled:opacity-50 disabled:cursor-not-allowed',
+            
+            // Variant styles
+            variant === 'default' && [
+              'bg-bgSoft border border-line/20',
+              'focus:ring-gold/20 focus:border-gold',
+              'text-foreground',
+            ],
+            
+            variant === 'outline' && [
+              'bg-transparent border border-line/40',
+              'focus:ring-gold/20 focus:border-gold',
+              'text-foreground',
+            ],
+            
+            // Error state
+            error && 'border-red-500 focus:ring-red-500/20 focus:border-red-500',
+            
+            className
+          )}
+          aria-describedby={clsx(
+            helperText && helperId,
+            error && errorMessage && errorId
+          )}
+          aria-invalid={error}
+          aria-label={ariaLabel}
+          {...props}
+        />
+        {helperText && !error && (
+          <p 
+            id={helperId}
+            className="text-xs text-foreground/60"
+          >
+            {helperText}
+          </p>
+        )}
+        {error && errorMessage && (
+          <p 
+            id={errorId}
+            className="text-xs text-red-500"
+            role="alert"
+          >
+            {errorMessage}
+          </p>
+        )}
+      </div>
     );
   }
 );

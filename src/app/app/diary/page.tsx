@@ -2,9 +2,8 @@
 
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { DiaryList } from '@/components/diary';
+import { LazyDiaryList, LazyNotificationCenter, LazyComponentWrapper } from '@/components/lazy';
 import { TypingIndicator } from '@/components/diary/TypingIndicator';
-import { NotificationCenter } from '@/components/notifications/NotificationCenter';
 import { useDiary } from '@/hooks/useDiary';
 import { useOfflineDiary } from '@/hooks/useOfflineDiary';
 import { useSocket } from '@/hooks/useSocket';
@@ -110,7 +109,9 @@ export default function DiaryPage() {
           </div>
         </div>
         
-        <NotificationCenter />
+        <LazyComponentWrapper>
+          <LazyNotificationCenter />
+        </LazyComponentWrapper>
       </div>
 
       {/* Typing indicator */}
@@ -128,12 +129,14 @@ export default function DiaryPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
       >
-        <DiaryList
-          entries={diary.entries}
-          onCreateEntry={handleCreateEntry}
-          onRefresh={diary.refresh || diary.refreshEntries}
-          isLoading={diary.loading || diary.isLoading}
-        />
+        <LazyComponentWrapper fallback={<div className="animate-pulse bg-muted rounded-lg h-64" />}>
+          <LazyDiaryList
+            entries={diary.entries}
+            onCreateEntry={handleCreateEntry}
+            onRefresh={diary.refresh || diary.refreshEntries}
+            isLoading={diary.loading || diary.isLoading}
+          />
+        </LazyComponentWrapper>
       </motion.div>
     </div>
   );

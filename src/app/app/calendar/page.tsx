@@ -3,7 +3,8 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Calendar as CalendarIcon, Bell, Plus, Heart } from 'lucide-react';
-import { Calendar, CalendarEventDetail, CalendarReminders } from '@/components/calendar';
+import { LazyCalendar, LazyComponentWrapper } from '@/components/lazy';
+import { CalendarEventDetail, CalendarReminders } from '@/components/calendar';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { useCalendar } from '@/hooks/useCalendar';
@@ -187,15 +188,17 @@ export default function CalendarPage() {
             transition={{ delay: 0.2 }}
             className="lg:col-span-3"
           >
-            <Calendar
-              datePlans={datePlans}
-              diaryEntries={diaryEntries}
-              memories={[]} // TODO: Add memories when implemented
-              onDateSelect={handleDateSelect}
-              onEventClick={handleEventClick}
-              selectedDate={selectedDate}
-              relationshipStartDate={authState.user?.relationshipStartDate}
-            />
+            <LazyComponentWrapper fallback={<div className="animate-pulse bg-muted rounded-lg h-96" />}>
+              <LazyCalendar
+                datePlans={datePlans}
+                diaryEntries={diaryEntries}
+                memories={[]} // TODO: Add memories when implemented
+                onDateSelect={handleDateSelect}
+                onEventClick={handleEventClick}
+                selectedDate={selectedDate}
+                relationshipStartDate={authState.user?.relationshipStartDate}
+              />
+            </LazyComponentWrapper>
           </motion.div>
 
           {/* Sidebar */}

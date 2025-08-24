@@ -4,6 +4,7 @@ import React from 'react';
 import { motion, HTMLMotionProps } from 'framer-motion';
 import { cn } from '@/utils';
 import { buttonPress } from '@/utils/animations';
+import { generateAriaLabel } from '@/utils/accessibility';
 
 interface ButtonProps extends Omit<HTMLMotionProps<'button'>, 'children'> {
   children: React.ReactNode;
@@ -13,6 +14,10 @@ interface ButtonProps extends Omit<HTMLMotionProps<'button'>, 'children'> {
   loading?: boolean;
   disabled?: boolean;
   className?: string;
+  'aria-label'?: string;
+  'aria-describedby'?: string;
+  'aria-expanded'?: boolean;
+  'aria-pressed'?: boolean;
 }
 
 export function Button({ 
@@ -25,7 +30,7 @@ export function Button({
   className,
   ...props 
 }: ButtonProps) {
-  const baseClasses = 'inline-flex items-center justify-center rounded-xl font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50';
+  const baseClasses = 'inline-flex items-center justify-center rounded-xl font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed';
   
   const variantClasses = {
     primary: 'bg-accent text-ink hover:bg-accent/90 active:bg-accent/80',
@@ -53,8 +58,10 @@ export function Button({
       className={classes}
       variants={buttonPress}
       initial="initial"
-      whileTap="pressed"
+      whileTap={disabled || loading ? undefined : "pressed"}
       disabled={disabled || loading}
+      aria-busy={loading}
+      aria-disabled={disabled || loading}
       {...props}
     >
       {loading && (
@@ -62,6 +69,7 @@ export function Button({
           className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"
           animate={{ rotate: 360 }}
           transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+          aria-hidden="true"
         />
       )}
       {children}
