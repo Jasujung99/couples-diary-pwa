@@ -1,8 +1,12 @@
+// Unified Next.js config with PWA enabled (no duplicate declarations)
+
+/** @type {import('next').NextConfig} */
 const withPWA = require('next-pwa')({
   dest: 'public',
   register: true,
   skipWaiting: true,
-  disable: process.env.NODE_ENV === 'development',
+  // Enable PWA in production only
+  disable: process.env.NODE_ENV !== 'production',
   runtimeCaching: [
     // Google Fonts
     {
@@ -12,9 +16,9 @@ const withPWA = require('next-pwa')({
         cacheName: 'google-fonts',
         expiration: {
           maxEntries: 4,
-          maxAgeSeconds: 365 * 24 * 60 * 60 // 365 days
-        }
-      }
+          maxAgeSeconds: 365 * 24 * 60 * 60,
+        },
+      },
     },
     {
       urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/i,
@@ -23,9 +27,9 @@ const withPWA = require('next-pwa')({
         cacheName: 'google-fonts-static',
         expiration: {
           maxEntries: 4,
-          maxAgeSeconds: 365 * 24 * 60 * 60 // 365 days
-        }
-      }
+          maxAgeSeconds: 365 * 24 * 60 * 60,
+        },
+      },
     },
     // Static assets
     {
@@ -35,9 +39,9 @@ const withPWA = require('next-pwa')({
         cacheName: 'static-font-assets',
         expiration: {
           maxEntries: 4,
-          maxAgeSeconds: 7 * 24 * 60 * 60 // 7 days
-        }
-      }
+          maxAgeSeconds: 7 * 24 * 60 * 60,
+        },
+      },
     },
     {
       urlPattern: /\.(?:jpg|jpeg|gif|png|svg|ico|webp)$/i,
@@ -46,9 +50,9 @@ const withPWA = require('next-pwa')({
         cacheName: 'static-image-assets',
         expiration: {
           maxEntries: 64,
-          maxAgeSeconds: 24 * 60 * 60 // 24 hours
-        }
-      }
+          maxAgeSeconds: 24 * 60 * 60,
+        },
+      },
     },
     {
       urlPattern: /\/_next\/image\?url=.+$/i,
@@ -57,9 +61,9 @@ const withPWA = require('next-pwa')({
         cacheName: 'next-image',
         expiration: {
           maxEntries: 64,
-          maxAgeSeconds: 24 * 60 * 60 // 24 hours
-        }
-      }
+          maxAgeSeconds: 24 * 60 * 60,
+        },
+      },
     },
     // Media assets
     {
@@ -70,9 +74,9 @@ const withPWA = require('next-pwa')({
         cacheName: 'static-audio-assets',
         expiration: {
           maxEntries: 32,
-          maxAgeSeconds: 24 * 60 * 60 // 24 hours
-        }
-      }
+          maxAgeSeconds: 24 * 60 * 60,
+        },
+      },
     },
     {
       urlPattern: /\.(?:mp4)$/i,
@@ -82,23 +86,11 @@ const withPWA = require('next-pwa')({
         cacheName: 'static-video-assets',
         expiration: {
           maxEntries: 32,
-          maxAgeSeconds: 24 * 60 * 60 // 24 hours
-        }
-      }
+          maxAgeSeconds: 24 * 60 * 60,
+        },
+      },
     },
-    // App pages - cache for offline viewing
-    {
-      urlPattern: /^https?:\/\/localhost:3000\/app\/.*/i,
-      handler: 'StaleWhileRevalidate',
-      options: {
-        cacheName: 'app-pages',
-        expiration: {
-          maxEntries: 32,
-          maxAgeSeconds: 24 * 60 * 60 // 24 hours
-        }
-      }
-    },
-    // API routes - network first with offline fallback
+    // API routes
     {
       urlPattern: /\/api\/diary\/entries.*$/i,
       handler: 'NetworkFirst',
@@ -106,13 +98,11 @@ const withPWA = require('next-pwa')({
         cacheName: 'diary-api',
         expiration: {
           maxEntries: 50,
-          maxAgeSeconds: 5 * 60 // 5 minutes
+          maxAgeSeconds: 5 * 60,
         },
         networkTimeoutSeconds: 10,
-        cacheableResponse: {
-          statuses: [0, 200]
-        }
-      }
+        cacheableResponse: { statuses: [0, 200] },
+      },
     },
     {
       urlPattern: /\/api\/dates.*$/i,
@@ -121,13 +111,11 @@ const withPWA = require('next-pwa')({
         cacheName: 'dates-api',
         expiration: {
           maxEntries: 30,
-          maxAgeSeconds: 5 * 60 // 5 minutes
+          maxAgeSeconds: 5 * 60,
         },
         networkTimeoutSeconds: 10,
-        cacheableResponse: {
-          statuses: [0, 200]
-        }
-      }
+        cacheableResponse: { statuses: [0, 200] },
+      },
     },
     {
       urlPattern: /\/api\/memories.*$/i,
@@ -136,15 +124,13 @@ const withPWA = require('next-pwa')({
         cacheName: 'memories-api',
         expiration: {
           maxEntries: 50,
-          maxAgeSeconds: 5 * 60 // 5 minutes
+          maxAgeSeconds: 5 * 60,
         },
         networkTimeoutSeconds: 10,
-        cacheableResponse: {
-          statuses: [0, 200]
-        }
-      }
+        cacheableResponse: { statuses: [0, 200] },
+      },
     },
-    // Other API routes
+    // Other APIs
     {
       urlPattern: /\/api\/.*$/i,
       handler: 'NetworkFirst',
@@ -152,12 +138,12 @@ const withPWA = require('next-pwa')({
         cacheName: 'apis',
         expiration: {
           maxEntries: 16,
-          maxAgeSeconds: 24 * 60 * 60 // 24 hours
+          maxAgeSeconds: 24 * 60 * 60,
         },
-        networkTimeoutSeconds: 10
-      }
+        networkTimeoutSeconds: 10,
+      },
     },
-    // Everything else
+    // Fallback
     {
       urlPattern: /.*/i,
       handler: 'NetworkFirst',
@@ -165,66 +151,77 @@ const withPWA = require('next-pwa')({
         cacheName: 'others',
         expiration: {
           maxEntries: 32,
-          maxAgeSeconds: 24 * 60 * 60 // 24 hours
+          maxAgeSeconds: 24 * 60 * 60,
         },
-        networkTimeoutSeconds: 10
-      }
-    }
-  ]
+        networkTimeoutSeconds: 10,
+      },
+    },
+  ],
 });
 
-/** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
   compiler: {
-    removeConsole: process.env.NODE_ENV !== 'development'
+    // Keep error/warn in prod console
+    removeConsole:
+      process.env.NODE_ENV === 'production' ? { exclude: ['error', 'warn'] } : false,
   },
   serverExternalPackages: ['socket.io', 'socket.io-client'],
   experimental: {
     optimizePackageImports: ['lucide-react', 'framer-motion'],
   },
+  headers: async () => {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          { key: 'Permissions-Policy', value: 'geolocation=(), microphone=(), camera=()' },
+        ],
+      },
+    ];
+  },
   webpack: (config, { dev, isServer }) => {
-    // Optimize bundle splitting
+    // Optimize bundle splitting for client builds in production
     if (!dev && !isServer) {
       config.optimization.splitChunks = {
         chunks: 'all',
         cacheGroups: {
           default: false,
           vendors: false,
-          // Vendor chunk for common libraries
           vendor: {
             name: 'vendor',
             chunks: 'all',
             test: /[\\/]node_modules[\\/]/,
-            priority: 20
+            priority: 20,
           },
-          // Common chunk for shared components
           common: {
             name: 'common',
             minChunks: 2,
             chunks: 'all',
             priority: 10,
             reuseExistingChunk: true,
-            enforce: true
+            enforce: true,
           },
-          // Separate chunk for large libraries
           framerMotion: {
             name: 'framer-motion',
             test: /[\\/]node_modules[\\/]framer-motion[\\/]/,
             chunks: 'all',
-            priority: 30
+            priority: 30,
           },
           lucide: {
             name: 'lucide-react',
             test: /[\\/]node_modules[\\/]lucide-react[\\/]/,
             chunks: 'all',
-            priority: 30
-          }
-        }
+            priority: 30,
+          },
+        },
       };
     }
     return config;
-  }
+  },
 };
 
 module.exports = withPWA(nextConfig);
